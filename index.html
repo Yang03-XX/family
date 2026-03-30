@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢乐家庭大冒险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF9F43',
+                        secondary: '#54BAB9',
+                        accent: '#E84393',
+                        light: '#FFF9F3',
+                        dark: '#333333'
+                    },
+                    fontFamily: {
+                        sans: ['Arial Rounded MT Bold', 'Avenir', 'Helvetica', 'Arial', 'sans-serif']
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            .text-shadow-lg {
+                text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            .btn-bounce:active {
+                transform: scale(0.95);
+            }
+        }
+        body {
+            background-color: #FFF9F3;
+            overflow-x: hidden;
+        }
+        .character {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .character:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
+        .character.selected {
+            border: 4px solid #E84393;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(232, 67, 147, 0.5);
+        }
+        .room {
+            transition: all 0.5s ease;
+            opacity: 0.8;
+        }
+        .room:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        .room.active {
+            border: 4px solid #54BAB9;
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(84, 186, 185, 0.5);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="min-h-screen flex flex-col">
+        <div id="start-screen" class="flex flex-col items-center justify-center min-h-screen p-4">
+            <div class="text-center mb-8 opacity-0 fade-in">
+                <h1 class="text-5xl md:text-7xl font-bold text-primary mb-4 text-shadow-lg">欢乐家庭大冒险</h1>
+                <p class="text-xl md:text-2xl text-dark mb-8">一起完成家庭任务，创造美好回忆！</p>
+            </div>
+            <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl p-6 mb-8 opacity-0 fade-in delay-200">
+                <h2 class="text-2xl font-bold text-center text-dark mb-6">选择你的角色</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="character flex flex-col items-center opacity-0 fade-in delay-300" data-character="dad">
+                        <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-blue-100 flex items-center justify-center mb-3 overflow-hidden text-4xl">
+                            👨
+                        </div>
+                        <span class="font-bold text-lg">爸爸</span>
+                    </div>
+                    <div class="character flex flex-col items-center opacity-0 fade-in delay-400" data-character="mom">
+                        <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-pink-100 flex items-center justify-center mb-3 overflow-hidden text-4xl">
+                            👩
+                        </div>
+                        <span class="font-bold text-lg">妈妈</span>
+                    </div>
+                    <div class="character flex flex-col items-center opacity-0 fade-in delay-500" data-character="son">
+                        <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-blue-50 flex items-center justify-center mb-3 overflow-hidden text-4xl">
+                            👦
+                        </div>
+                        <span class="font-bold text-lg">儿子</span>
+                    </div>
+                    <div class="character flex flex-col items-center opacity-0 fade-in delay-500" data-character="daughter">
+                        <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-red-50 flex items-center justify-center mb-3 overflow-hidden text-4xl">
+                            👧
+                        </div>
+                        <span class="font-bold text-lg">女儿</span>
+                    </div>
+                </div>
+            </div>
+            <button id="start-game" class="bg-primary hover:bg-orange-500 text-white font-bold text-xl py-4 px-10 rounded-full shadow-lg transition-all duration-300 btn-bounce opacity-0 fade-in delay-500 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                开始冒险 <i class="fa fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+        <div id="game-screen" class="hidden flex flex-col min-h-screen">
+            <header class="bg-white shadow-md py-3 px-6 flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-xl">
+                        👨‍👩‍👧‍👦
+                    </div>
+                    <h1 class="text-2xl font-bold text-primary">欢乐家庭大冒险</h1>
+                </div>
+                <div class="flex items-center">
+                    <div id="selected-character" class="flex items-center mr-6">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-2 text-xl">
+                            <span id="character-icon" class="font-bold">爸</span>
+                        </div>
+                        <span id="character-name" class="font-bold">爸爸</span>
+                    </div>
+                    <button id="help-btn" class="bg-secondary hover:bg-teal-500 text-white p-2 rounded-full">
+                        <i class="fa fa-question"></i>
+                    </button>
+                </div>
+            </header>
+            <main class="flex-grow p-6">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4">选择任务区域</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="room bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-room="living-room">
+                            <div class="w-full h-48 bg-blue-50 flex items-center justify-center text-4xl">
+                                🏠
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-xl font-bold mb-2">客厅</h3>
+                                <p class="text-gray-600">一起布置温馨的家庭环境</p>
+                            </div>
+                        </div>
+                        <div class="room bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-room="kitchen">
+                            <div class="w-full h-48 bg-orange-50 flex items-center justify-center text-4xl">
+                                🍳
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-xl font-bold mb-2">厨房</h3>
+                                <p class="text-gray-600">合作准备美味的家庭大餐</p>
+                            </div>
+                        </div>
+                        <div class="room bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer" data-room="park">
+                            <div class="w-full h-48 bg-green-50 flex items-center justify-center text-4xl">
+                                🌳
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-xl font-bold mb-2">公园</h3>
+                                <p class="text-gray-600">户外野餐和有趣的游戏</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="task-area" class="bg-white rounded-xl shadow-lg p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="task-title" class="text-2xl font-bold">任务标题</h2>
+                        <button id="close-task" class="text-gray-500 hover:text-gray-700">
+                            <i class="fa fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="task-description" class="mb-6"></div>
+                    <div id="task-content" class="mb-6"></div>
+                    <div class="flex justify-between">
+                        <button id="task-hint" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-6 rounded-lg">
+                            <i class="fa fa-lightbulb-o mr-2"></i> 提示
+                        </button>
+                        <button id="complete-task" class="bg-primary hover:bg-orange-500 text-white font-bold py-2 px-6 rounded-lg">
+                            完成任务 <i class="fa fa-check ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="photo-wall" class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                    <h2 class="text-2xl font-bold mb-4">家庭合影墙</h2>
+                    <div id="photos-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400">
+                            <i class="fa fa-camera text-3xl"></i>
+                            <p class="ml-2">完成任务解锁合影</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div id="task-complete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fa fa-check text-green-500 text-4xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-primary mb-4">任务完成！</h2>
+                <p id="task-complete-message" class="text-lg mb-6">太棒了！你成功完成了任务。</p>
+                <div id="new-photo-preview" class="mb-6 hidden">
+                    <h3 class="font-bold mb-2">新解锁的家庭合影：</h3>
+                    <div class="bg-gray-100 rounded-lg p-2 inline-block">
+                        <div id="new-photo" class="w-40 h-40 bg-blue-50 flex items-center justify-center text-4xl rounded">
+                            📸
+                        </div>
+                    </div>
+                </div>
+                <button id="close-modal" class="bg-primary hover:bg-orange-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 btn-bounce">
+                    继续冒险 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+        <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-primary">游戏帮助</h2>
+                    <button id="close-help" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="mb-6">
+                    <h3 class="font-bold text-lg mb-2">游戏目标</h3>
+                    <p class="mb-4">完成各个房间的家庭任务，解锁家庭合影，增进家庭成员间的感情。</p>
+                    <h3 class="font-bold text-lg mb-2">游戏操作</h3>
+                    <ul class="list-disc pl-5 mb-4">
+                        <li>选择你喜欢的家庭成员角色</li>
+                        <li>点击不同的房间区域开始任务</li>
+                        <li>根据任务提示完成挑战</li>
+                        <li>完成任务后解锁家庭合影</li>
+                    </ul>
+                    <h3 class="font-bold text-lg mb-2">角色技能</h3>
+                    <ul class="list-disc pl-5">
+                        <li><strong>爸爸：</strong> 力量大，可以搬运重物</li>
+                        <li><strong>妈妈：</strong> 细心，可以找到隐藏物品</li>
+                        <li><strong>儿子：</strong> 速度快，可以快速移动</li>
+                        <li><strong>女儿：</strong> 创造力强，可以装饰物品</li>
+                    </ul>
+                </div>
+                <button id="got-it" class="w-full bg-secondary hover:bg-teal-500 text-white font-bold py-3 rounded-lg">
+                    我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const gameData = {
+            selectedCharacter: null,
+            completedTasks: [],
+            photos: [],
+            rooms: {
+                'living-room': {
+                    name: '客厅',
+                    description: '一起布置温馨的家庭环境',
+                    tasks: [{
+                        id: 'decorate-livingroom',
+                        title: '布置客厅',
+                        description: '帮助家人一起布置客厅，让它变得更加温馨舒适。',
+                        instructions: '将家具拖放到合适的位置，创建一个舒适的家庭空间。',
+                        hint: '尝试将沙发、茶几和电视放在合适的位置，形成一个舒适的观看区域。',
+                        completionMessage: '客厅布置完成！看起来非常温馨舒适！',
+                        photo: '🏠'
+                    }]
+                },
+                'kitchen': {
+                    name: '厨房',
+                    description: '合作准备美味的家庭大餐',
+                    tasks: [{
+                        id: 'cook-dinner',
+                        title: '准备晚餐',
+                        description: '和家人一起准备一顿美味的晚餐。',
+                        instructions: '按照食谱，将正确的食材拖放到锅中。注意时间和顺序！',
+                        hint: '先放蔬菜，然后放肉类，最后加入调味料。记得控制火候！',
+                        completionMessage: '晚餐准备好了！看起来非常美味！',
+                        photo: '🍳'
+                    }]
+                },
+                'park': {
+                    name: '公园',
+                    description: '户外野餐和有趣的游戏',
+                    tasks: [{
+                        id: 'picnic-preparation',
+                        title: '准备野餐',
+                        description: '帮助家人准备一次愉快的户外野餐。',
+                        instructions: '将食物和用品整理到野餐篮中，确保带上所有必需品。',
+                        hint: '不要忘记带食物、饮料、餐具和毯子！',
+                        completionMessage: '野餐准备完成！现在可以出发去公园了！',
+                        photo: '🌳'
+                    }]
+                }
+            }
+        };
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startGameBtn = document.getElementById('start-game');
+        const characters = document.querySelectorAll('.character');
+        const characterIcon = document.getElementById('character-icon');
+        const characterName = document.getElementById('character-name');
+        const rooms = document.querySelectorAll('.room');
+        const taskArea = document.getElementById('task-area');
+        const taskTitle = document.getElementById('task-title');
+        const taskDescription = document.getElementById('task-description');
+        const taskContent = document.getElementById('task-content');
+        const closeTaskBtn = document.getElementById('close-task');
+        const taskHintBtn = document.getElementById('task-hint');
+        const completeTaskBtn = document.getElementById('complete-task');
+        const taskCompleteModal = document.getElementById('task-complete-modal');
+        const taskCompleteMessage = document.getElementById('task-complete-message');
+        const newPhotoPreview = document.getElementById('new-photo-preview');
+        const newPhoto = document.getElementById('new-photo');
+        const closeModalBtn = document.getElementById('close-modal');
+        const photosContainer = document.getElementById('photos-container');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help');
+        const gotItBtn = document.getElementById('got-it');
+        let currentTask = null;
+        characters.forEach(character => {
+            character.addEventListener('click', () => {
+                characters.forEach(c => c.classList.remove('selected'));
+                character.classList.add('selected');
+                gameData.selectedCharacter = character.dataset.character;
+                switch(gameData.selectedCharacter) {
+                    case 'dad': characterIcon.textContent = '爸'; characterName.textContent = '爸爸'; break;
+                    case 'mom': characterIcon.textContent = '妈'; characterName.textContent = '妈妈'; break;
+                    case 'son': characterIcon.textContent = '儿'; characterName.textContent = '儿子'; break;
+                    case 'daughter': characterIcon.textContent = '女'; characterName.textContent = '女儿'; break;
+                }
+                startGameBtn.disabled = false;
+            });
+        });
+        startGameBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            gameScreen.classList.add('fade-in');
+        });
+        rooms.forEach(room => {
+            room.addEventListener('click', () => {
+                rooms.forEach(r => r.classList.remove('active'));
+                room.classList.add('active');
+                const roomId = room.dataset.room;
+                const roomData = gameData.rooms[roomId];
+                const task = roomData.tasks[0];
+                currentTask = task;
+                taskArea.classList.remove('hidden');
+                taskTitle.textContent = task.title;
+                taskDescription.innerHTML = `<p class="mb-4">${task.description}</p><p class="font-bold">任务说明：</p><p>${task.instructions}</p>`;
+                generateTaskContent(task);
+            });
+        });
+        function generateTaskContent(task) {
+            taskContent.innerHTML = '';
+            switch(task.id) {
+                case 'decorate-livingroom':
+                    taskContent.innerHTML = `
+                        <div class="bg-gray-100 rounded-lg p-4 mb-4 relative h-64">
+                            <div class="absolute inset-0 flex items-center justify-center text-gray-400" id="livingroom-empty">拖放家具到这里布置客厅</div>
+                            <div id="livingroom-decorations" class="absolute inset-0 hidden flex items-center justify-center text-6xl">🏠</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4" id="furniture-items">
+                            <div class="bg-white p-2 rounded shadow cursor-grab furniture" draggable="true" data-furniture="sofa">
+                                <div class="bg-yellow-400 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">沙发</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-grab furniture" draggable="true" data-furniture="table">
+                                <div class="bg-amber-800 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">茶几</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-grab furniture" draggable="true" data-furniture="tv">
+                                <div class="bg-gray-400 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">电视</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center" id="decoration-message"></div>
+                    `;
+                    const furnitureItems = document.querySelectorAll('.furniture');
+                    const livingroomEmpty = document.getElementById('livingroom-empty');
+                    const livingroomDecorations = document.getElementById('livingroom-decorations');
+                    const decorationMessage = document.getElementById('decoration-message');
+                    let placedItems = 0;
+                    furnitureItems.forEach(item => {
+                        item.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', item.dataset.furniture));
+                    });
+                    livingroomEmpty.addEventListener('dragover', (e) => e.preventDefault());
+                    livingroomEmpty.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        livingroomEmpty.style.display = 'none';
+                        livingroomDecorations.classList.remove('hidden');
+                        placedItems++;
+                        if (placedItems === 3) {
+                            decorationMessage.innerHTML = '<p class="text-green-500">完美！客厅布置完成！</p>';
+                            completeTaskBtn.disabled = false;
+                        } else {
+                            decorationMessage.innerHTML = `<p class="text-green-500">很好！你放置了 ${placedItems} 件家具。</p>`;
+                        }
+                    });
+                    completeTaskBtn.disabled = true;
+                    break;
+                case 'cook-dinner':
+                    taskContent.innerHTML = `
+                        <div class="bg-gray-100 rounded-lg p-4 mb-4 relative h-64 flex items-center justify-center text-6xl">🍳</div>
+                        <div class="grid grid-cols-3 gap-4" id="ingredients">
+                            <div class="bg-white p-2 rounded shadow cursor-pointer ingredient" data-ingredient="vegetables">
+                                <div class="bg-green-400 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">蔬菜</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-pointer ingredient" data-ingredient="meat">
+                                <div class="bg-red-400 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">肉类</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-pointer ingredient" data-ingredient="seasoning">
+                                <div class="bg-yellow-400 h-16 rounded mb-2"></div>
+                                <p class="text-center text-sm">调味料</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center" id="cooking-message"></div>
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="cooking-progress" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    `;
+                    const ingredients = document.querySelectorAll('.ingredient');
+                    const cookingMessage = document.getElementById('cooking-message');
+                    const cookingProgress = document.getElementById('cooking-progress');
+                    let addedIngredients = [];
+                    let cooking = false;
+                    ingredients.forEach(ingredient => {
+                        ingredient.addEventListener('click', () => {
+                            if (cooking) return;
+                            const type = ingredient.dataset.ingredient;
+                            if (!addedIngredients.includes(type)) {
+                                addedIngredients.push(type);
+                                ingredient.classList.add('bg-green-100');
+                                if (addedIngredients.length === 3) {
+                                    cookingMessage.innerHTML = '<p class="text-green-500">完美！所有食材都已添加。现在可以开始烹饪！</p>';
+                                    completeTaskBtn.disabled = false;
+                                } else {
+                                    cookingMessage.innerHTML = `<p class="text-green-500">你添加了 ${addedIngredients.length} 种食材。</p>`;
+                                }
+                            }
+                        });
+                    });
+                    completeTaskBtn.disabled = true;
+                    break;
+                case 'picnic-preparation':
+                    taskContent.innerHTML = `
+                        <div class="bg-gray-100 rounded-lg p-4 mb-4 relative h-64 flex items-center justify-center text-6xl">🌳</div>
+                        <div class="grid grid-cols-4 gap-4" id="picnic-items">
+                            <div class="bg-white p-2 rounded shadow cursor-pointer picnic-item" data-item="food">
+                                <div class="bg-red-400 h-12 rounded mb-2"></div>
+                                <p class="text-center text-sm">食物</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-pointer picnic-item" data-item="drinks">
+                                <div class="bg-blue-400 h-12 rounded mb-2"></div>
+                                <p class="text-center text-sm">饮料</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-pointer picnic-item" data-item="utensils">
+                                <div class="bg-gray-400 h-12 rounded mb-2"></div>
+                                <p class="text-center text-sm">餐具</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow cursor-pointer picnic-item" data-item="blanket">
+                                <div class="bg-yellow-400 h-12 rounded mb-2"></div>
+                                <p class="text-center text-sm">毯子</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center" id="picnic-message"></div>
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="picnic-progress" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    `;
+                    const picnicItems = document.querySelectorAll('.picnic-item');
+                    const picnicMessage = document.getElementById('picnic-message');
+                    const picnicProgress = document.getElementById('picnic-progress');
+                    let packedItems = [];
+                    picnicItems.forEach(item => {
+                        item.addEventListener('click', () => {
+                            const type = item.dataset.item;
+                            if (!packedItems.includes(type)) {
+                                packedItems.push(type);
+                                item.classList.add('bg-green-100');
+                                const progress = (packedItems.length / 4) * 100;
+                                picnicProgress.style.width = `${progress}%`;
+                                if (packedItems.length === 4) {
+                                    picnicMessage.innerHTML = '<p class="text-green-500">完美！所有物品都已准备好！</p>';
+                                    completeTaskBtn.disabled = false;
+                                } else {
+                                    picnicMessage.innerHTML = `<p class="text-green-500">你已经准备好了 ${packedItems.length} 件物品。</p>`;
+                                }
+                            }
+                        });
+                    });
+                    completeTaskBtn.disabled = true;
+                    break;
+            }
+        }
+        closeTaskBtn.addEventListener('click', () => {
+            taskArea.classList.add('hidden');
+            rooms.forEach(room => room.classList.remove('active'));
+            currentTask = null;
+        });
+        taskHintBtn.addEventListener('click', () => {
+            if (currentTask) alert(`提示：${currentTask.hint}`);
+        });
+        completeTaskBtn.addEventListener('click', () => {
+            if (currentTask) {
+                if (!gameData.completedTasks.includes(currentTask.id)) {
+                    gameData.completedTasks.push(currentTask.id);
+                    gameData.photos.push({ id: currentTask.id, url: currentTask.photo, title: currentTask.title });
+                    updatePhotosWall();
+                }
+                taskCompleteMessage.textContent = currentTask.completionMessage;
+                newPhoto.textContent = currentTask.photo;
+                newPhotoPreview.classList.remove('hidden');
+                taskCompleteModal.classList.remove('hidden');
+            }
+        });
+        closeModalBtn.addEventListener('click', () => {
+            taskCompleteModal.classList.add('hidden');
+            taskArea.classList.add('hidden');
+            rooms.forEach(room => room.classList.remove('active'));
+            currentTask = null;
+        });
+        function updatePhotosWall() {
+            photosContainer.innerHTML = '';
+            if (gameData.photos.length === 0) {
+                photosContainer.innerHTML = `<div class="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400"><i class="fa fa-camera text-3xl"></i><p class="ml-2">完成任务解锁合影</p></div>`;
+                return;
+            }
+            gameData.photos.forEach(photo => {
+                const photoElement = document.createElement('div');
+                photoElement.className = 'bg-white rounded-lg overflow-hidden shadow cursor-pointer hover:shadow-lg transition-shadow';
+                photoElement.innerHTML = `<div class="w-full h-32 flex items-center justify-center text-4xl">${photo.url}</div><div class="p-2"><p class="text-center text-sm font-bold">${photo.title}</p></div>`;
+                photosContainer.appendChild(photoElement);
+            });
+        }
+        helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+        closeHelpBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+        gotItBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+        updatePhotosWall();
+    </script>
+</body>
+</html>
